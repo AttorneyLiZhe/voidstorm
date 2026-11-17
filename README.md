@@ -9,8 +9,10 @@ ship holds a 1280×720 arena against escalating waves of five kinds of hostile �
 Weavers, Spitters, Splitters and the capital-class Hollow Star that arrives every fifth
 wave. Downed hostiles drop salvage; flying over it levels the ship up and offers a choice of
 three systems (split cannons, lance rounds, an Aegis shield, repair nanobots and more), so
-every run builds a different ship. It is complete: title screen, HUD, waves with banners, a
-boss health bar, pause, a game-over screen with full run stats, and instant restart.
+every run builds a different ship. Clear wave 10 — the second Hollow Star — to win the run,
+then keep flying endless as long as the hull holds. It is complete: title screen, HUD with
+the objective on the glass, waves with banners, a boss health bar, pause, a victory screen
+and a game-over screen, both with full run stats, and instant restart.
 
 Everything is hand-rolled: vector art drawn in code, synthesized WebAudio sound and music,
 a fixed-step simulation with a seeded random source — no engine, no libraries, no assets,
@@ -24,7 +26,8 @@ node serve.ts        # then open http://localhost:8080
 
 Or serve the `game/` folder with any static file server and open `index.html`.
 Controls: **WASD / arrows** to fly, **mouse** to aim, **hold click or Space** to fire,
-**1 · 2 · 3 or click** to choose an upgrade, **P** pause, **M** mute, **R** restart.
+**1 · 2 · 3 or click** to choose an upgrade, **P** pause, **M** mute, **R** restart,
+**C** keep flying endless after a win.
 
 ## Layout
 

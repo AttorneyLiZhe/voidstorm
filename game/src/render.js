@@ -3,12 +3,13 @@
 // sleek pilot ship, particle bursts, floating damage numbers and a full HUD. The renderer
 // reads the world and the shell's screen state; it never mutates either.
 
-import { COLORS, ENEMY_KINDS, FIELD, isBossWave } from './config.js';
+import { COLORS, ENEMY_KINDS, FIELD, WIN_WAVE, isBossWave } from './config.js';
 
 export const SCREEN_TITLE = 'title';
 export const SCREEN_PLAY = 'play';
 export const SCREEN_LEVELUP = 'levelup';
 export const SCREEN_OVER = 'over';
+export const SCREEN_VICTORY = 'victory';
 export const SCREEN_PAUSE = 'pause';
 
 const TAU = Math.PI * 2;
@@ -357,6 +358,11 @@ function drawHud(ctx, world) {
     bar(ctx, FIELD.width / 2 - 190, 74, 380, 8, boss.hp / boss.maxHp, COLORS.bad, 'rgba(255,255,255,0.13)');
   }
 
+  // The run's objective, always on the glass until it is done.
+  ctx.font = `700 12.5px ${FONT}`;
+  ctx.fillStyle = world.won ? COLORS.good : COLORS.accentWarm;
+  ctx.fillText(world.won ? '★ STORM BROKEN — ENDLESS FLIGHT ★' : `OBJECTIVE — CLEAR WAVE ${WIN_WAVE} TO BREAK THE STORM`, FIELD.width / 2, 102);
+
   ctx.textAlign = 'right';
   ctx.font = `700 13px ${FONT}`;
   ctx.fillStyle = COLORS.textDim;
@@ -477,7 +483,7 @@ function drawTitle(ctx, world, ui) {
   const lines = [
     'WASD or arrow keys to fly — mouse to aim, hold click or Space to fire.',
     'Downed hostiles drop salvage: fly over it to level up and bolt on new systems.',
-    'Survive the waves. Every fifth wave, something capital-sized comes for you.',
+    'Every fifth wave, something capital-sized comes for you. Clear wave 10 to win — then fly endless.',
   ];
   lines.forEach((line, i) => ctx.fillText(line, FIELD.width / 2, 330 + i * 26));
 
@@ -544,6 +550,55 @@ function drawOver(ctx, world, ui) {
   ctx.restore();
 }
 
+function drawVictory(ctx, world, ui) {
+  drawWorld(ctx, world);
+  drawHud(ctx, world);
+  ctx.save();
+  ctx.fillStyle = 'rgba(4, 12, 6, 0.62)';
+  ctx.fillRect(0, 0, FIELD.width, FIELD.height);
+  ctx.textAlign = 'center';
+  ctx.font = `900 64px ${FONT}`;
+  ctx.shadowColor = COLORS.accentWarm;
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = '#fff3d6';
+  ctx.fillText('★ STORM BROKEN ★', FIELD.width / 2, 190);
+  ctx.shadowBlur = 0;
+  ctx.font = `600 17px ${FONT}`;
+  ctx.fillStyle = COLORS.textDim;
+  ctx.fillText(`Wave ${WIN_WAVE} cleared — the Hollow Star is wreckage and the arena is yours.`, FIELD.width / 2, 226);
+
+  const stats = [
+    ['FINAL SCORE', world.score.toLocaleString('en-US')],
+    ['WAVE CLEARED', `${Math.max(1, world.wave)}`],
+    ['KILLS', `${world.kills}`],
+    ['TIME TO VICTORY', formatTime(world.time)],
+    ['PILOT LEVEL', `${world.player.level}`],
+    ['BEST SCORE', Math.max(ui.best, world.score).toLocaleString('en-US')],
+  ];
+  ctx.font = `700 15px ${FONT}`;
+  stats.forEach(([label, value], i) => {
+    const colX = FIELD.width / 2 - 250 + (i % 3) * 250;
+    const rowY = 300 + Math.floor(i / 3) * 74;
+    ctx.fillStyle = COLORS.textDim;
+    ctx.fillText(label, colX, rowY);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = `800 30px ${FONT}`;
+    ctx.fillText(value, colX, rowY + 36);
+    ctx.font = `700 15px ${FONT}`;
+  });
+
+  const pulse = 0.72 + 0.28 * Math.sin(ui.time * 3.2);
+  ctx.globalAlpha = pulse;
+  ctx.font = `800 23px ${FONT}`;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('CLICK OR PRESS C TO KEEP FLYING — ENDLESS', FIELD.width / 2, 520);
+  ctx.globalAlpha = 1;
+  ctx.font = `600 15px ${FONT}`;
+  ctx.fillStyle = COLORS.textDim;
+  ctx.fillText('or press R for a fresh run', FIELD.width / 2, 550);
+  ctx.restore();
+}
+
 function drawPause(ctx, world) {
   drawWorld(ctx, world);
   ctx.save();
@@ -567,6 +622,10 @@ export function render(ctx, world, screen, ui) {
   }
   if (screen === SCREEN_OVER) {
     drawOver(ctx, world, ui);
+    return;
+  }
+  if (screen === SCREEN_VICTORY) {
+    drawVictory(ctx, world, ui);
     return;
   }
   if (screen === SCREEN_PAUSE) {

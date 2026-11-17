@@ -130,6 +130,12 @@ export function isBossWave(wave) {
   return wave % 5 === 0;
 }
 
+/** Clear this wave — the second Hollow Star — and the run is won. The arena stays open after. */
+export const WIN_WAVE = 10;
+
+/** Score bonus paid the moment the winning wave falls. */
+export const WIN_BONUS = 2500;
+
 /** The upgrade deck. `apply` mutates the pilot's stats; `blurb` is what the card promises. */
 export const UPGRADES = [
   {

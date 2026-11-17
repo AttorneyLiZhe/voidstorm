@@ -4,8 +4,8 @@
 // same seed always produces the same frame. The maker's tooling loads these URLs in a browser
 // and captures the canvas (see shots.json for the scene list).
 
-import { FIELD, STEP } from './config.js';
-import { SCREEN_LEVELUP, SCREEN_OVER, SCREEN_PLAY, SCREEN_TITLE } from './render.js';
+import { FIELD, STEP, UPGRADES } from './config.js';
+import { SCREEN_LEVELUP, SCREEN_OVER, SCREEN_PLAY, SCREEN_TITLE, SCREEN_VICTORY } from './render.js';
 
 const PLAY_SECONDS = 34;
 const LEVELUP_LIMIT_SECONDS = 240;
@@ -141,6 +141,25 @@ export function stageShot(name, world, seed) {
     }, (w) => w.awaitingChoice);
     world.shake = 0;
     return { screen: SCREEN_LEVELUP, best: 0 };
+  }
+  if (name === 'victory') {
+    // A stacked veteran build flies the whole run for real — waves 1 to 10 through the
+    // actual rules, the autopilot at the stick — and the scene freezes on the frame
+    // where the storm breaks. The build is strong, not invincible: the frame is earned.
+    const build = [
+      'damage', 'damage', 'damage', 'damage', 'damage', 'damage',
+      'firerate', 'firerate', 'firerate', 'firerate', 'firerate',
+      'multishot', 'multishot', 'multishot', 'pierce', 'pierce',
+      'hull', 'hull', 'hull', 'hull', 'nanobots', 'nanobots', 'nanobots',
+      'shield', 'magnet', 'magnet', 'speed',
+    ];
+    for (const id of build) {
+      const upgrade = UPGRADES.find((u) => u.id === id);
+      if (upgrade) upgrade.apply(world.player);
+    }
+    runSeconds(world, 1500, (w) => autopilotControl(w), (w) => w.won);
+    world.shake = 0;
+    return { screen: world.won ? SCREEN_VICTORY : SCREEN_PLAY, best: world.score };
   }
   if (name === 'end') {
     runSeconds(world, END_LIMIT_SECONDS, (w) => autopilotControl(w, { reckless: true }));

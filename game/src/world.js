@@ -3,7 +3,7 @@
 // reports what happened as event bits so the shell can play sounds and shake the screen.
 // Rendering reads the world; it never writes it.
 
-import { ENEMY_KINDS, FIELD, GEM, PLAYER, UPGRADES, isBossWave, waveHpScale, waveSize, xpForLevel } from './config.js';
+import { ENEMY_KINDS, FIELD, GEM, PLAYER, UPGRADES, WIN_BONUS, WIN_WAVE, isBossWave, waveHpScale, waveSize, xpForLevel } from './config.js';
 import { Random } from './random.js';
 
 export const EVENT_OVER = 1;
@@ -16,6 +16,7 @@ export const EVENT_KILL = 64;
 export const EVENT_PICKUP = 128;
 export const EVENT_SHIELD_BREAK = 256;
 export const EVENT_BOSS_DOWN = 512;
+export const EVENT_WIN = 1024;
 
 const TAU = Math.PI * 2;
 
@@ -43,6 +44,7 @@ export class World {
     this.spawnTimer = 0;
     this.bossAlive = false;
     this.over = false;
+    this.won = false;
     this.awaitingChoice = false;
     this.choices = [];
     this.pickupCombo = 0;
@@ -394,6 +396,15 @@ export class World {
       this.waveTimer = 2.4;
       this.score += 50 * this.wave;
       this.floater(p.x, p.y - 44, `WAVE BONUS +${50 * this.wave}`, '#51e07a');
+      if (this.wave === WIN_WAVE && !this.won) {
+        // The second Hollow Star is wreckage and the arena is clear: the run is won.
+        // The shell pauses on the victory screen; the waves resume if the pilot stays.
+        this.won = true;
+        this.score += WIN_BONUS;
+        this.burst(p.x, p.y, 90, '#ffd166', 320, 0.9);
+        this.burst(p.x, p.y, 60, '#51e07a', 240, 0.7);
+        events |= EVENT_WIN;
+      }
     }
 
     // Pilot movement: thrust toward the held direction, drag against drift.

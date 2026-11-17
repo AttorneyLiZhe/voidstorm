@@ -16,9 +16,10 @@ import {
   EVENT_SHIELD_BREAK,
   EVENT_SHOOT,
   EVENT_WAVE,
+  EVENT_WIN,
   World,
 } from './world.js';
-import { SCREEN_LEVELUP, SCREEN_OVER, SCREEN_PAUSE, SCREEN_PLAY, SCREEN_TITLE, choiceCardRects, render } from './render.js';
+import { SCREEN_LEVELUP, SCREEN_OVER, SCREEN_PAUSE, SCREEN_PLAY, SCREEN_TITLE, SCREEN_VICTORY, choiceCardRects, render } from './render.js';
 import { stageShot } from './shots.js';
 
 const canvas = document.getElementById('game');
@@ -107,6 +108,13 @@ function live() {
       screen = SCREEN_LEVELUP;
       announce(`Level ${world.player.level}. Choose an upgrade.`);
     }
+    if (events & EVENT_WIN) {
+      sound.levelUp();
+      sound.explosion(true);
+      saveBest();
+      screen = SCREEN_VICTORY;
+      announce(`Storm broken. Wave ${world.wave} cleared with score ${world.score}. Press C to keep flying endless, or R for a new run.`);
+    }
     if (events & EVENT_OVER) {
       sound.gameOver();
       saveBest();
@@ -150,7 +158,7 @@ function live() {
           events |= world.step(STEP, input.control(world.player));
           accumulator -= STEP;
           steps += 1;
-          if (world.awaitingChoice || world.over) {
+          if (world.awaitingChoice || world.over || (events & EVENT_WIN)) {
             accumulator = 0;
             break;
           }
@@ -171,7 +179,7 @@ function live() {
         screen = SCREEN_PLAY;
         announce('Resumed.');
       }
-    } else if (screen === SCREEN_OVER) {
+    } else if (screen === SCREEN_OVER || screen === SCREEN_VICTORY) {
       // Let the wreckage drift: particles still live in the world, so keep stepping gently
       // with no pilot input until they settle, then freeze on the stats.
       accumulator += dt;
@@ -185,7 +193,15 @@ function live() {
         world.particles = world.particles.filter((pt) => pt.life > 0);
         accumulator -= STEP;
       }
-      if (input.takePressed('KeyR') || input.takePressed('Enter') || input.takePressed('PointerLeft')) startRun();
+      if (screen === SCREEN_VICTORY && (input.takePressed('KeyC') || input.takePressed('Enter') || input.takePressed('PointerLeft'))) {
+        screen = SCREEN_PLAY;
+        sound.uiClick();
+        announce('Endless flight. The waves keep coming.');
+      } else if (input.takePressed('KeyR')) {
+        startRun();
+      } else if (screen === SCREEN_OVER && (input.takePressed('Enter') || input.takePressed('PointerLeft'))) {
+        startRun();
+      }
     }
 
     if (input.takePressed('KeyM')) {
